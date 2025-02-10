@@ -51,6 +51,13 @@ Expected behavior:
 
 - After refreshing the page, the “Select User to Assign” field should display any previously added user.
 
+In addition to the above, implement functionality to:
+
+-  **Remove Users:**
+Users assigned to a procedure should be able to be removed by the user from the procedure.
+- **Remove All Users:**
+Provide functionality to remove all users from a procedure at once.
+
 ## Solution notes
 1. Create table structure to store the assigned users
 2. Create endpoint(s) to interact with new table structure
