@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
+using Microsoft.EntityFrameworkCore;
 using RL.Data;
 using RL.Data.DataModels;
 
@@ -20,8 +21,11 @@ public class PlanProcedureController : ControllerBase
 
     [HttpGet]
     [EnableQuery]
-    public IEnumerable<PlanProcedure> Get()
+    public IQueryable<PlanProcedure> Get()
     {
-        return _context.PlanProcedures;
+        return _context.PlanProcedures
+            .Include(pp => pp.Procedure)
+            .Include(pp => pp.PlanProcedureUsers)
+                .ThenInclude(pu => pu.User);
     }
 }

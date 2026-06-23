@@ -2,9 +2,12 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import {
   addProcedureToPlan,
+  addUserToPlanProcedure,
   getPlanProcedures,
   getProcedures,
   getUsers,
+  removeAllUsersFromPlanProcedure,
+  removeUserFromPlanProcedure,
 } from "../../api/api";
 import Layout from '../Layout/Layout';
 import ProcedureItem from "./ProcedureItem/ProcedureItem";
@@ -22,8 +25,7 @@ const Plan = () => {
       var planProcedures = await getPlanProcedures(id);
       var users = await getUsers();
 
-      var userOptions = [];
-      users.map((u) => userOptions.push({ label: u.name, value: u.userId }));
+      var userOptions = users.map((u) => ({ label: u.name, value: u.userId }));
 
       setUsers(userOptions);
       setProcedures(procedures);
@@ -46,6 +48,7 @@ const Plan = () => {
             procedureId: procedure.procedureId,
             procedureTitle: procedure.procedureTitle,
           },
+          planProcedureUsers: [],
         },
       ];
     });
@@ -82,8 +85,52 @@ const Plan = () => {
                       {planProcedures.map((p) => (
                         <PlanProcedureItem
                           key={p.procedure.procedureId}
-                          procedure={p.procedure}
+                          procedure={p}
                           users={users}
+                          onAssignUser={async (planId, procedureId, userId) => {
+                            await addUserToPlanProcedure(planId, procedureId, userId);
+                            setPlanProcedures((prev) =>
+                              prev.map((item) =>
+                                item.planId === planId && item.procedureId === procedureId
+                                  ? {
+                                      ...item,
+                                      planProcedureUsers: [
+                                        ...(item.planProcedureUsers || []),
+                                        { user: users.find((u) => u.value === userId) ? { userId, name: users.find((u) => u.value === userId).label } : { userId, name: "" } },
+                                      ],
+                                    }
+                                  : item
+                              )
+                            );
+                          }}
+                          onRemoveUser={async (planId, procedureId, userId) => {
+                            await removeUserFromPlanProcedure(planId, procedureId, userId);
+                            setPlanProcedures((prev) =>
+                              prev.map((item) =>
+                                item.planId === planId && item.procedureId === procedureId
+                                  ? {
+                                      ...item,
+                                      planProcedureUsers: (item.planProcedureUsers || []).filter(
+                                        (pu) => pu.user.userId !== userId
+                                      ),
+                                    }
+                                  : item
+                              )
+                            );
+                          }}
+                          onRemoveAllUsers={async (planId, procedureId) => {
+                            await removeAllUsersFromPlanProcedure(planId, procedureId);
+                            setPlanProcedures((prev) =>
+                              prev.map((item) =>
+                                item.planId === planId && item.procedureId === procedureId
+                                  ? {
+                                      ...item,
+                                      planProcedureUsers: [],
+                                    }
+                                  : item
+                              )
+                            );
+                          }}
                         />
                       ))}
                     </div>
