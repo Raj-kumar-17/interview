@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using RL.Backend.Exceptions;
 
 namespace RL.Backend.Models;
 
@@ -31,10 +32,18 @@ public static class ApiResponseExtensions
     public static IActionResult ToActionResult<T>(this ApiResponse<T> response) where T : new()
     {
         if (!response.Succeeded)
-            return new BadRequestObjectResult(response.Exception);
-        else if (typeof(T) == typeof(Unit) || response.Value is null)
-            return new OkResult();
-        else
-            return new OkObjectResult(response.Value);
+        {
+            return response.Exception switch
+            {
+                BadRequestException => new BadRequestObjectResult(response.Exception?.Message),
+                NotFoundException => new NotFoundObjectResult(response.Exception?.Message),
+                _ => new ObjectResult(response.Exception?.Message) { StatusCode = StatusCodes.Status500InternalServerError }
+            };
+        }
+
+        if (typeof(T) == typeof(Unit) || response.Value is null)
+            return new OkObjectResult(new { success = true });
+
+        return new OkObjectResult(response.Value);
     }
 }
